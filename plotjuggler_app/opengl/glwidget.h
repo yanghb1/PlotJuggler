@@ -38,18 +38,21 @@ private:
     void from_ACUYawRate(const QStringList &values, int index, qint64 time, double &angle);
     void from_EPS_StrgAng(const QStringList &values, VehicleState &state, qint64 time);
     void from_pbox_rotate(const QStringList &values, VehicleState &start_point, int index, bool &start_init, bool &index_init);
+    void from_pbox_rotate_2(const QStringList &values, VehicleState &point_a, VehicleState &point_b, bool &init_a, bool &init_b, int index);
 
     void draw_pbox();
     void draw_ACUYawRate();
     void draw_EPS_StrgAng();
     void draw_pbox_rotate();
+    void draw_pbox_rotate_2();
 
 
 private:
     QVector<QVector2D> points;  //pbox
-    QVector<QVector2D> points2; //横摆角急计算
+    QVector<QVector2D> points2; //横摆角计算
     QVector<QVector2D> points3; //pbox旋转后
     QVector<QVector2D> points4; //方向盘转角
+    QVector<QVector2D> points5; //pbox旋转后 2
     QReadWriteLock readWriteLock;
 
     GLfloat m_scale = 0.005f;
@@ -61,7 +64,7 @@ private:
     GLfloat m_translateY = 0;
     GLfloat m_rotate = 0; //角度
 
-    int m_startIndex = 30;
+    int m_startIndex = 50;
 };
 
 #endif // GLWIDGET_H

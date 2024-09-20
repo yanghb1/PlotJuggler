@@ -79,6 +79,15 @@ std::map<std::string, std::vector<std::pair<double, double>>> GLWidget::SetFileP
     bool index_init = false;
     VehicleState start_point = {0.0, 0.0, 0.0};
 
+    //pbox旋转后 2
+    points5.clear();
+    points5.append(QVector2D(0,0));
+    VehicleState point_a = {0.0, 0.0, 0.0};
+    VehicleState point_b = {0.0, 0.0, 0.0};
+    bool init_a = false;
+    bool init_b = false;
+
+
     QString content = in.readLine();
     while (!in.atEnd()) {
         QStringList values = content.split(',');
@@ -102,6 +111,8 @@ std::map<std::string, std::vector<std::pair<double, double>>> GLWidget::SetFileP
         }
 
         from_pbox_rotate(values, start_point, index, start_init, index_init);
+
+        from_pbox_rotate_2(values, point_a, point_b, init_a, init_b, index);
 
         lastTimestamp = timestamp;
         ++index;
@@ -186,8 +197,9 @@ void GLWidget::paintGL()
 
     draw_pbox();
     draw_ACUYawRate();
-    draw_EPS_StrgAng();
+//    draw_EPS_StrgAng();
 //    draw_pbox_rotate();
+    draw_pbox_rotate_2();
 }
 
 void GLWidget::wheelEvent(QWheelEvent *event) {
@@ -333,6 +345,76 @@ void GLWidget::from_pbox_rotate(const QStringList &values, VehicleState &start_p
 
 }
 
+void GLWidget::from_pbox_rotate_2(const QStringList &values, VehicleState &point_a, VehicleState &point_b, bool &init_a, bool &init_b, int index)
+{
+    float point_x = values.at(index_x).toFloat();
+    float point_y = values.at(index_y).toFloat();
+
+    if(init_a && init_b){
+        VehicleState point_c;
+        point_c.x = point_x;
+        point_c.y = point_y;
+
+        QVector2D point;
+        auto side = cal_point_side(point_a, point_b, point_c);
+        if (side == PointSide::ON_LINE) {
+            point.setX(0);
+            double distance = cal_point_distance(point_a, point_c);
+            if (is_same_direction(point_a, point_b, point_c)) {
+                point.setY(distance);
+            } else {
+                point.setY(distance * -1);
+            }
+        } else {
+            double a = cal_point_distance(point_b, point_c);
+            double b = cal_point_distance(point_a, point_c);
+            double c = cal_point_distance(point_a, point_b);
+            double A = cal_point_angle(a, b, c);
+            if (side == PointSide::LEFT) {
+                // 二象限 左正 右负
+                if (A < 90) {
+                    double radians = A * (M_PI / 180.0);
+                    point.setX(b * std::sin(radians));
+                    point.setY(b * std::cos(radians));
+                // 三象限
+                } else {
+                    double radians = (180 - A) * (M_PI / 180.0);
+                    point.setX(b * std::sin(radians));
+                    point.setY(b * std::cos(radians)* -1);
+                }
+            } else if (side == PointSide::RTGHT) {
+                // 一象限 左正 右负
+                if (A < 90) {
+                    double radians = A * (M_PI / 180.0);
+                    point.setX(b * std::sin(radians) * -1);
+                    point.setY(b * std::cos(radians));
+                // 四象限
+                } else {
+                    double radians = (180 - A) * (M_PI / 180.0);
+                    point.setX(b * std::sin(radians) * -1);
+                    point.setY(b * std::cos(radians) * -1);
+                }
+            }
+        }
+
+        points5.append(point);
+    }
+
+    if(!init_a){
+        point_a.x = point_x;
+        point_a.y = point_y;
+
+        init_a = true;
+    }
+    if(!init_b && index == m_startIndex){
+        point_b.x = point_x;
+        point_b.y = point_y;
+
+        init_b = true;
+    }
+
+}
+
 void GLWidget::draw_pbox()
 {
     glPushMatrix();
@@ -355,7 +437,7 @@ void GLWidget::draw_ACUYawRate()
 {
     glPushMatrix();
     glTranslatef(-points2.at(0).x(), -points2.at(0).y(), 0);
-    glRotatef(-m_rotate, 0, 0, 1);
+//    glRotatef(-m_rotate, 0, 0, 1);
     glBegin(GL_POINTS);
 
     glColor3f(0.0f, 1.0f, 0.0f); // 绿色
@@ -402,6 +484,24 @@ void GLWidget::draw_pbox_rotate()
 
     for(int i = 0; i < points3.size(); ++i){
         glVertex2f(points3.at(i).x(), points3.at(i).y());
+    }
+
+    glEnd();
+    glPopMatrix();
+}
+
+void GLWidget::draw_pbox_rotate_2()
+{
+    glPushMatrix();
+    glRotatef(-m_rotate, 0, 0, 1);
+    glBegin(GL_POINTS);
+
+    glColor3f(0.0f, 0.0f, 1.0f); // 蓝色
+    glLineWidth(2.0f); // 设置线宽为 5 像素
+    glPointSize(1.0f);
+
+    for(int i = 0; i < points5.size(); ++i){
+        glVertex2f(points5.at(i).x(), points5.at(i).y());
     }
 
     glEnd();

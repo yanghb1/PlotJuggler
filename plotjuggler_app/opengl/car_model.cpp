@@ -114,3 +114,34 @@ double getSteer(double x){
         }
     }
 }
+
+PointSide cal_point_side(const VehicleState &A, const VehicleState &B, const VehicleState &C)
+{
+    double cross = (B.x - A.x) * (C.y - A.y) - (B.y - A.y) * (C.x - A.x);
+    if (cross > 0) {
+        return PointSide::LEFT;
+    } else if (cross < 0) {
+        return PointSide::RTGHT;
+    } else {
+        return PointSide::ON_LINE;
+    }
+}
+
+double cal_point_distance(const VehicleState &A, const VehicleState &B)
+{
+    double dx = A.x -B.x;
+    double dy = A.y -B.y;
+    return std::sqrt(dx * dx + dy * dy);
+}
+
+bool is_same_direction(const VehicleState &A, const VehicleState &B, const VehicleState &C)
+{
+    return ((B.x - A.x) * (C.x - A.x) >= 0) && ((B.y - A.y) * (C.y - A.y) >= 0);
+}
+
+double cal_point_angle(double a, double b, double c)
+{
+    double cosA = (b * b  + c * c - a * a) / (2 * b * c);
+    double angleA = std::acos(cosA);
+    return angleA * (180 / M_PI);
+}

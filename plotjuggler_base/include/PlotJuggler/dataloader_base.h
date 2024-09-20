@@ -44,7 +44,7 @@ public:
   virtual bool readDataFromFile(FileLoadInfo* fileload_info,
                                 PlotDataMapRef& destination) = 0;
 
-  bool loadData(PlotDataMapRef& destination, const std::map<std::string, std::vector<std::pair<double, double>>> &plot_data){
+  void loadData(PlotDataMapRef& destination, const std::map<std::string, std::vector<std::pair<double, double>>> &plot_data){
 
       for(auto iter : plot_data){
           std::vector<PlotData*> plots_vector;
@@ -55,7 +55,6 @@ public:
             plots_vector[0]->pushBack({ value.first, value.second });
           }
       }
-
   }
 
   void setParserFactories(ParserFactories* parsers)
